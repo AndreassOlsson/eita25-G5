@@ -1,2 +1,9 @@
-Q1: Creates a serial number for the CA if one does not exist already
+Q A: Creates a serial number for the CA if one does not exist already
 
+Q B:
+In keytool:
+In openssl: use -extfile v3.ext to specify an extensions file
+
+Q C: Extensions are additional data fields added to the certificates to add attributes or restrictions
+
+Q D: 
