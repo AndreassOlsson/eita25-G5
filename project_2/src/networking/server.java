@@ -19,6 +19,8 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.TrustManagerFactory;
 
+import javax.naming.ldap.LdapName;
+import javax.naming.ldap.Rdn;
 
 public class server implements Runnable {
   private ServerSocket serverSocket = null;
@@ -50,7 +52,8 @@ public class server implements Runnable {
 
       //new
       String username = ((X509Certificate) cert[0]).getSubjectX500Principal().getName();
-
+      String cn = getFieldFromDN(subject, "CN");
+      System.out.println("Client CN = " + cn);
 
       PrintWriter out = null;
       BufferedReader in = null;
@@ -78,6 +81,18 @@ public class server implements Runnable {
       return;
     }
   }
+
+  static String getFieldFromDN(String dn, String field) {
+    try {
+        LdapName ldapDN = new LdapName(dn);
+        for (Rdn rdn : ldapDN.getRdns()) {
+            if (rdn.getType().equalsIgnoreCase(field)) {
+                return rdn.getValue().toString();
+            }
+        }
+    } catch (Exception ignored) {}
+    return null;
+}
   
   private void newListener() { (new Thread(this)).start(); } // calls run()
   public static void main(String args[]) {
