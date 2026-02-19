@@ -22,65 +22,44 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.naming.ldap.LdapName;
 import javax.naming.ldap.Rdn;
 
-public class server implements Runnable {
-  private ServerSocket serverSocket = null;
+public class server {
   private static int numConnectedClients = 0;
-  
-  public server(ServerSocket ss) throws IOException {
-    serverSocket = ss;
-    newListener();
-  }
 
-  public void run() {
-    try {
-      SSLSocket socket=(SSLSocket)serverSocket.accept();
-      newListener();
-      SSLSession session = socket.getSession();
-      Certificate[] cert = session.getPeerCertificates();
-      String subject = ((X509Certificate) cert[0]).getSubjectX500Principal().getName();
-      String issuer = ((X509Certificate) cert[0]).getIssuerX500Principal().getName();
+  public static void main(String[] args) throws Exception {
+    int port = Integer.parseInt(args[0]);
+    SSLServerSocket ss = (SSLServerSocket) getServerSocketFactory("TLSv1.2")
+        .createServerSocket(port, 0, InetAddress.getByName(null));
+    ss.setNeedClientAuth(true);
 
-      // new
-      int serialNumber = ((X509Certificate) cert[0]).getSerialNumber().intValue();
-
-      numConnectedClients++;
-      System.out.println("client connected");
-      System.out.println("client name (cert subject DN field): " + subject);
-      System.out.println("client issuer (cert issuer DN field): " + issuer);
-      System.out.println("client serial number (cert serial number): " + serialNumber);
-      System.out.println(numConnectedClients + " concurrent connection(s)\n");
-
-      //new
-      String username = ((X509Certificate) cert[0]).getSubjectX500Principal().getName();
-      String cn = getFieldFromDN(subject, "CN");
-      System.out.println("Client CN = " + cn);
-
-      PrintWriter out = null;
-      BufferedReader in = null;
-      out = new PrintWriter(socket.getOutputStream(), true);
-      in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-      String clientMsg = null;
-      while ((clientMsg = in.readLine()) != null) {
-        String rev = new StringBuilder(clientMsg).reverse().toString();
-        System.out.println("received '" + clientMsg + "' from client");
-        System.out.print("sending '" + rev + "' to client...");
-        out.println(rev);
-        out.flush();
-        System.out.println("done\n");
-      }
-      in.close();
-      out.close();
-      socket.close();
-      numConnectedClients--;
-      System.out.println("client disconnected");
-      System.out.println(numConnectedClients + " concurrent connection(s)\n");
-    } catch (IOException e) {
-      System.out.println("Client died: " + e.getMessage());
-      e.printStackTrace();
-      return;
+    while (true) {
+      SSLSocket socket = (SSLSocket) ss.accept();
+      new Thread(() -> handleClient(socket)).start();
     }
   }
+
+  static void handleClient(SSLSocket socket) {
+    try {
+      socket.startHandshake();
+      SSLSession session = socket.getSession();
+      X509Certificate clientCert = (X509Certificate) session.getPeerCertificates()[0];
+
+      String subjectDN = clientCert.getSubjectX500Principal().getName();
+      String cn = getFieldFromDN(subjectDN, "CN");
+      String ou = getFieldFromDN(subjectDN, "OU");
+      String o  = getFieldFromDN(subjectDN, "O");
+
+      synchronized (server.class) { numConnectedClients++; }
+      System.out.println("CN=" + cn + " OU=" + ou + " O=" + o);
+
+      // ... your I/O loop here ...
+
+      socket.close();
+      synchronized (server.class) { numConnectedClients--; }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
 
   static String getFieldFromDN(String dn, String field) {
     try {
@@ -92,26 +71,8 @@ public class server implements Runnable {
         }
     } catch (Exception ignored) {}
     return null;
-}
-  
-  private void newListener() { (new Thread(this)).start(); } // calls run()
-  public static void main(String args[]) {
-    System.out.println("\nServer Started\n");
-    int port = -1;
-    if (args.length >= 1) {
-      port = Integer.parseInt(args[0]);
-    }
-    String type = "TLSv1.2";
-    try {
-      ServerSocketFactory ssf = getServerSocketFactory(type);
-      ServerSocket ss = ssf.createServerSocket(port, 0, InetAddress.getByName(null));
-      ((SSLServerSocket)ss).setNeedClientAuth(true); // enables client authentication
-      new server(ss);
-    } catch (IOException e) {
-      System.out.println("Unable to start Server: " + e.getMessage());
-      e.printStackTrace();
-    }
   }
+  
 
   private static ServerSocketFactory getServerSocketFactory(String type) {
     if (type.equals("TLSv1.2")) {
