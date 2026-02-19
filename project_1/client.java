@@ -70,7 +70,14 @@ public class client {
       SSLSession session = socket.getSession();
       Certificate[] cert = session.getPeerCertificates();
       String subject = ((X509Certificate) cert[0]).getSubjectX500Principal().getName();
+      String issuer = ((X509Certificate) cert[0]).getIssuerX500Principal().getName();
+
+      int serialNumber = ((X509Certificate) cert[0]).getSerialNumber().intValue();
+
       System.out.println("certificate name (subject DN field) on certificate received from server:\n" + subject + "\n");
+      System.out.println("certificate name (issuer DN field) on certificate received from server:\n" + issuer + "\n");
+      System.out.println("certificate serial number on certificate received from server:\n" + serialNumber + "\n");
+      
       System.out.println("socket after handshake:\n" + socket + "\n");
       System.out.println("secure connection established\n\n");
 

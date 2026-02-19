@@ -6,6 +6,7 @@ import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 
+
 public class server implements Runnable {
   private ServerSocket serverSocket = null;
   private static int numConnectedClients = 0;
@@ -24,6 +25,7 @@ public class server implements Runnable {
       String subject = ((X509Certificate) cert[0]).getSubjectX500Principal().getName();
       String issuer = ((X509Certificate) cert[0]).getIssuerX500Principal().getName();
 
+      // new
       int serialNumber = ((X509Certificate) cert[0]).getSerialNumber().intValue();
 
       numConnectedClients++;
@@ -32,6 +34,10 @@ public class server implements Runnable {
       System.out.println("client issuer (cert issuer DN field): " + issuer);
       System.out.println("client serial number (cert serial number): " + serialNumber);
       System.out.println(numConnectedClients + " concurrent connection(s)\n");
+
+      //new
+      String username = ((X509Certificate) cert[0]).getSubjectX500Principal().getName();
+
 
       PrintWriter out = null;
       BufferedReader in = null;
