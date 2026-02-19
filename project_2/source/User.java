@@ -1,3 +1,4 @@
+package source;
 class User {
     String username;
     Role role;  // PATIENT, NURSE, DOCTOR, GOVERNMENT

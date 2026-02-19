@@ -1,3 +1,4 @@
+package source;
 class MedicalRecord {
     String patientId;
     String doctorId;
