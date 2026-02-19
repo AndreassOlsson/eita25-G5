@@ -1,4 +1,4 @@
-package src;
+package src.models;
 import java.time.LocalDateTime;
 
 public class AuditLogEntry {

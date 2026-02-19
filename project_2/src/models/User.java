@@ -1,4 +1,5 @@
-package src;
+package src.models;
+
 class User {
     String username;
     Role role;  // PATIENT, NURSE, DOCTOR, GOVERNMENT
