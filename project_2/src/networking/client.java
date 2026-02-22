@@ -8,6 +8,8 @@ import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 
+import javax.naming.ldap.LdapName;
+import javax.naming.ldap.Rdn;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
@@ -82,6 +84,9 @@ public class client {
       String subject = ((X509Certificate) cert[0]).getSubjectX500Principal().getName();
       String issuer = ((X509Certificate) cert[0]).getIssuerX500Principal().getName();
 
+      String subjectCN = getFieldFromDN(subject, "CN");
+      String subjectOU = getFieldFromDN(subject, "OU");
+      String subjectO  = getFieldFromDN(subject, "O");
       int serialNumber = ((X509Certificate) cert[0]).getSerialNumber().intValue();
 
       System.out.println("certificate name (subject DN field) on certificate received from server:\n" + subject + "\n");
@@ -114,5 +119,17 @@ public class client {
     } catch (Exception e) {
       e.printStackTrace();
     }
+  }
+
+  static String getFieldFromDN(String dn, String field) {
+    try {
+        LdapName ldapDN = new LdapName(dn);
+        for (Rdn rdn : ldapDN.getRdns()) {
+            if (rdn.getType().equalsIgnoreCase(field)) {
+                return rdn.getValue().toString();
+            }
+        }
+    } catch (Exception ignored) {}
+    return null;
   }
 }
