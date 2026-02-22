@@ -1,6 +1,12 @@
 package src.repositories;
 
+import java.io.IOException;
+
+import src.models.MedicalRecord;
+import src.models.PermissionDeniedException;
+import src.models.User;
+
 public interface IRecordRepo {
-    // TODO
-    // Interface for interacting with our database, no matter if local file storage or postgreSQL, to avoid coupling
+    MedicalRecord read(User user, String recordId) throws PermissionDeniedException, IOException;
+    void write(User user, MedicalRecord record) throws PermissionDeniedException, IOException;
 }
