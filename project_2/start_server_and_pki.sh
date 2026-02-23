@@ -21,4 +21,11 @@ rm -rf keystores
 echo ""
 echo "Starting the server..."
 javac src/**/*.java
-java -cp . src.networking.server 9876
+# Pass system properties to the server
+# Note: Using server_keystore.jks and server_truststore.jks which are created by setup_pki.sh
+java \
+  -Djavax.net.ssl.keyStore=keystores/server_keystore.jks \
+  -Djavax.net.ssl.keyStorePassword=password \
+  -Djavax.net.ssl.trustStore=keystores/server_truststore.jks \
+  -Djavax.net.ssl.trustStorePassword=password \
+  -cp . src.networking.server 9876

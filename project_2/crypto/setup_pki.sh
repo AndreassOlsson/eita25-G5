@@ -29,9 +29,11 @@ create_entity() {
     echo "--- Generating PKI for: $ALIAS ---"
     
     # 1. Create Truststore (Contains only the CA cert) 
+    # NAMING CONVENTION: entity_truststore.jks
     keytool -importcert -file "$OUT_DIR/ca_cert.pem" -alias ca -keystore "$OUT_DIR/${PREFIX}_truststore.jks" -storepass $PASS -noprompt
 
     # 2. Create Keystore & Keypair (The Private Key)
+    # NAMING CONVENTION: entity_keystore.jks
     keytool -genkeypair -alias $ALIAS -keyalg RSA -keysize 2048 -keystore "$OUT_DIR/${PREFIX}_keystore.jks" -storepass $PASS -keypass $PASS -dname "$DNAME"
 
     # 3. Generate CSR (Certificate Signing Request)

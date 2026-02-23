@@ -8,48 +8,53 @@ import java.security.KeyStore;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 
+import src.config.Settings;
+
 /*
  * Client for Hospital System
- * Usage: java src.networking.client <host> <port> <user_prefix> [password]
- * Example: java src.networking.client localhost 9876 doctor_alice
+ * Usage: java -Djavax.net.ssl.keyStore=keystores/alice_keystore.jks \
+ *             -Djavax.net.ssl.keyStorePassword=password \
+ *             -Djavax.net.ssl.trustStore=keystores/alice_truststore.jks \
+ *             -Djavax.net.ssl.trustStorePassword=password \
+ *             src.networking.client <host> <port> <user_prefix>
  */
 public class client {
     
-    private static final String KEYSTORE_DIR = "keystores/";
-    private static final String TRUSTSTORE_PATH = "keystores/client_truststore.jks"; // Or server_truststore if shared? setup_pki makes *_truststore.jks for each user.
-    // setup_pki.sh: "create_entity ... 1. Create Truststore (Contains only the CA cert) ... _truststore.jks"
-    // So each user has their own truststore. specific to them? No, it just imports CA cert.
-    // So any truststore with CA cert works. We can use the user's specific truststore.
-
     public static void main(String[] args) {
-        if (args.length < 3) {
-            System.out.println("USAGE: java src.networking.client <host> <port> <user_prefix> [password]");
-            System.out.println("Example: java src.networking.client localhost 9876 doctor_alice");
+        if (args.length < 2) {
+            System.out.println("USAGE: java ... src.networking.client <host> <port> [user_prefix]");
             System.exit(-1);
         }
 
         String host = args[0];
         int port = Integer.parseInt(args[1]);
-        String userPrefix = args[2];
-        char[] password = (args.length > 3) ? args[3].toCharArray() : "password".toCharArray();
+        String userPrefix = (args.length > 2) ? args[2] : "Unknown";
 
-        String keystorePath = KEYSTORE_DIR + userPrefix + "_keystore.jks";
-        String truststorePath = KEYSTORE_DIR + userPrefix + "_truststore.jks";
+        // Fetch settings from System Properties (Settings class enforces this)
+        String keystorePath = Settings.getKeystorePath();
+        String truststorePath = Settings.getTruststorePath();
+        char[] keystorePass = Settings.getKeystorePassword();
+        char[] truststorePass = Settings.getTruststorePassword();
 
         System.out.println("Connecting to " + host + ":" + port);
-        System.out.println("User: " + userPrefix);
+        System.out.println("User Context: " + userPrefix);
         System.out.println("Keystore: " + keystorePath);
+        System.out.println("Truststore: " + truststorePath);
 
         try {
-            SSLSocketFactory factory = getSocketFactory(keystorePath, truststorePath, password);
+            SSLSocketFactory factory = getSocketFactory(keystorePath, truststorePath, keystorePass, truststorePass);
             SSLSocket socket = (SSLSocket) factory.createSocket(host, port);
             
             socket.startHandshake();
+            SSLSession session = socket.getSession();
             System.out.println("Secure connection established.");
+            System.out.println("  Protocol: " + session.getProtocol());
+            System.out.println("  Cipher Suite: " + session.getCipherSuite());
 
             try (BufferedReader networkIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                  PrintWriter networkOut = new PrintWriter(socket.getOutputStream(), true);
@@ -80,19 +85,19 @@ public class client {
         }
     }
 
-    private static SSLSocketFactory getSocketFactory(String keystorePath, String truststorePath, char[] password) throws Exception {
+    private static SSLSocketFactory getSocketFactory(String keystorePath, String truststorePath, char[] keystorePass, char[] truststorePass) throws Exception {
         KeyStore ks = KeyStore.getInstance("JKS");
         try (FileInputStream fis = new FileInputStream(keystorePath)) {
-            ks.load(fis, password);
+            ks.load(fis, keystorePass);
         }
 
         KeyStore ts = KeyStore.getInstance("JKS");
         try (FileInputStream fis = new FileInputStream(truststorePath)) {
-            ts.load(fis, password);
+            ts.load(fis, truststorePass);
         }
 
         KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-        kmf.init(ks, password);
+        kmf.init(ks, keystorePass);
 
         TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
         tmf.init(ts);

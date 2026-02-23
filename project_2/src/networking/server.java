@@ -20,6 +20,7 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.TrustManagerFactory;
 
+import src.config.Settings;
 import src.models.MedicalRecord;
 import src.models.PermissionDeniedException;
 import src.models.Role;
@@ -30,16 +31,22 @@ import src.repositories.LocalFSAuditLogRepo;
 import src.repositories.LocalFSRecordRepo;
 
 public class server {
-    private static final String KEYSTORE_PATH = "keystores/server_keystore.jks";
-    private static final String TRUSTSTORE_PATH = "keystores/server_truststore.jks";
-    private static final char[] PASSWORD = "password".toCharArray();
     
     private static IRecordRepo recordRepo;
     private static IAuditLogRepo auditLogRepo;
 
     public static void main(String[] args) {
         if (args.length < 1) {
-            System.err.println("Usage: java src.networking.server <port>");
+            System.err.println("Usage: java ... src.networking.server <port>");
+            System.exit(1);
+        }
+
+        // Fetch settings from System Properties to check functionality early
+        try {
+            System.out.println("Using Keystore: " + Settings.getKeystorePath());
+            System.out.println("Using Truststore: " + Settings.getTruststorePath());
+        } catch (RuntimeException e) {
+            System.err.println("Configuration Error: " + e.getMessage());
             System.exit(1);
         }
 
@@ -73,15 +80,23 @@ public class server {
         
         KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
         KeyStore ks = KeyStore.getInstance("JKS");
-        try (FileInputStream fis = new FileInputStream(KEYSTORE_PATH)) {
-            ks.load(fis, PASSWORD);
+        
+        String keystorePath = Settings.getKeystorePath();
+        char[] keystorePass = Settings.getKeystorePassword();
+        
+        try (FileInputStream fis = new FileInputStream(keystorePath)) {
+            ks.load(fis, keystorePass);
         }
-        kmf.init(ks, PASSWORD);
+        kmf.init(ks, keystorePass);
 
         TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
         KeyStore ts = KeyStore.getInstance("JKS");
-        try (FileInputStream fis = new FileInputStream(TRUSTSTORE_PATH)) {
-            ts.load(fis, PASSWORD);
+        
+        String truststorePath = Settings.getTruststorePath();
+        char[] truststorePass = Settings.getTruststorePassword();
+
+        try (FileInputStream fis = new FileInputStream(truststorePath)) {
+            ts.load(fis, truststorePass);
         }
         tmf.init(ts);
 
@@ -107,6 +122,8 @@ public class server {
                 User user = extractUserFromCert(cert);
                 
                 System.out.println("Authenticated User: " + user);
+                System.out.println("  Protocol: " + session.getProtocol());
+                System.out.println("  Cipher Suite: " + session.getCipherSuite());
 
                 String requestLine;
                 while ((requestLine = in.readLine()) != null) {
