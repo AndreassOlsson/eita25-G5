@@ -73,6 +73,21 @@ public class LocalFSRecordRepo implements IRecordRepo {
         writeToFile(record);
     }
 
+    @Override
+    public void delete(User user, String recordId) throws PermissionDeniedException, IOException {
+        MedicalRecord record = readFromFile(recordId);
+        if (record == null) {
+             throw new IOException("Record not found: " + recordId);
+        }
+
+        if (!AccessController.canDelete(user)) {
+             throw new PermissionDeniedException("User " + user.getUsername() + " not allowed to delete records.");
+        }
+        
+        Path file = Paths.get(dbPath, recordId + ".txt");
+        Files.deleteIfExists(file);
+    }
+
     private MedicalRecord readFromFile(String id) throws IOException {
         Path file = Paths.get(dbPath, id + ".txt");
         if (!Files.exists(file)) return null;

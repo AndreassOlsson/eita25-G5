@@ -1,8 +1,16 @@
 package src.networking;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.security.KeyStore;
-import javax.net.ssl.*;
+
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManagerFactory;
 
 /*
  * Client for Hospital System
@@ -50,6 +58,7 @@ public class client {
                 System.out.println("\n--- Commands ---");
                 System.out.println("READ <recordId>");
                 System.out.println("WRITE <recordId> <patientId>;<doctorId>;<nurseId>;<division>;<data>");
+                System.out.println("DELETE <recordId>");
                 System.out.println("QUIT to exit");
                 System.out.print("> ");
 

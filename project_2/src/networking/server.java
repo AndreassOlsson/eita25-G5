@@ -24,7 +24,9 @@ import src.models.MedicalRecord;
 import src.models.PermissionDeniedException;
 import src.models.Role;
 import src.models.User;
+import src.repositories.IAuditLogRepo;
 import src.repositories.IRecordRepo;
+import src.repositories.LocalFSAuditLogRepo;
 import src.repositories.LocalFSRecordRepo;
 
 public class server {
@@ -33,6 +35,7 @@ public class server {
     private static final char[] PASSWORD = "password".toCharArray();
     
     private static IRecordRepo recordRepo;
+    private static IAuditLogRepo auditLogRepo;
 
     public static void main(String[] args) {
         if (args.length < 1) {
@@ -42,6 +45,7 @@ public class server {
 
         int port = Integer.parseInt(args[0]);
         recordRepo = new LocalFSRecordRepo();
+        auditLogRepo = new LocalFSAuditLogRepo();
 
         try {
             SSLServerSocketFactory ssf = getServerSocketFactory();
@@ -150,8 +154,14 @@ public class server {
             try {
                 if ("READ".equalsIgnoreCase(command) && parts.length >= 2) {
                     String recordId = parts[1];
-                    MedicalRecord record = recordRepo.read(user, recordId);
-                    return "OK " + record.toString();
+                    try {
+                        MedicalRecord record = recordRepo.read(user, recordId);
+                        auditLogRepo.log(user, "READ", recordId, "Success");
+                        return "OK " + record.toString();
+                    } catch (PermissionDeniedException e) {
+                        auditLogRepo.log(user, "READ", recordId, "Denied: " + e.getMessage());
+                        throw e;
+                    }
                 } 
                 else if ("WRITE".equalsIgnoreCase(command) && parts.length >= 3) {
                     String recordId = parts[1];
@@ -168,8 +178,25 @@ public class server {
                         dataParts[4]
                     );
                     
-                    recordRepo.write(user, record);
-                    return "OK Record written";
+                    try {
+                        recordRepo.write(user, record);
+                        auditLogRepo.log(user, "WRITE", recordId, "Success");
+                        return "OK Record written";
+                    } catch (PermissionDeniedException e) {
+                        auditLogRepo.log(user, "WRITE", recordId, "Denied: " + e.getMessage());
+                        throw e;
+                    }
+                }
+                else if ("DELETE".equalsIgnoreCase(command) && parts.length >= 2) {
+                    String recordId = parts[1];
+                    try {
+                        recordRepo.delete(user, recordId);
+                        auditLogRepo.log(user, "DELETE", recordId, "Success");
+                        return "OK Record deleted";
+                    } catch (PermissionDeniedException e) {
+                        auditLogRepo.log(user, "DELETE", recordId, "Denied: " + e.getMessage());
+                        throw e;
+                    }
                 }
                 else {
                     return "ERROR Unknown command";
@@ -177,6 +204,11 @@ public class server {
             } catch (PermissionDeniedException e) {
                 return "DENIED " + e.getMessage();
             } catch (IOException e) {
+                try {
+                    auditLogRepo.log(user, command, parts.length > 1 ? parts[1] : "N/A", "Error: " + e.getMessage());
+                } catch (IOException logEx) {
+                    logEx.printStackTrace();
+                }
                 return "ERROR " + e.getMessage();
             }
         }

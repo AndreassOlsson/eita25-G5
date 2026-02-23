@@ -1,7 +1,9 @@
 package src.repositories;
 
+import java.io.IOException;
+
+import src.models.User;
 
 public interface IAuditLogRepo {
-    // TODO
-    // Interface for interacting with our audit log database, no matter if local file storage or postgreSQL, to avoid coupling
+    void log(User user, String action, String recordId, String details) throws IOException;
 }
