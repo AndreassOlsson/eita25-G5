@@ -1,111 +1,112 @@
-# Medical Record System (Project 2)
+# Medical Record System - Quick Test Guide
 
-A secure, TLS-encrypted client-server application for managing medical records with role-based access control.
+Use this guide to quickly test the authentication and access control logic.
 
-## Quick Start
+## 1. Setup & Start Server
 
-### 1. Setup PKI and Start Server
-
-This script generates all necessary keys/certificates and starts the server.
+Run this once in a separate terminal to generate keys and start the server.
 
 ```bash
 ./start_server_and_pki.sh
 ```
 
-_The server will listen on port 9876._
-_(Default password for all keystores is `password`)_
+---
 
-### 2. Start a Client
+## 2. Test Scenarios
 
-Open a new terminal for each client. Usage:
+Open a **new terminal** for each client session below.
 
-```bash
-./start_client.sh <host> <port> <user_id> <password>
-```
+### Doctor (Alice)
 
-**Users (created by setup script):**
+**Role:** Doctor | **Division:** Cardiology
 
-- `doctor_alice` (Doctor, Cardiology)
-- `nurse_bob` (Nurse, Cardiology)
-- `patient_charlie` (Patient)
-- `gov_dave` (Government Agency)
-
-#### Example: Login as Doctor Alice
+**1. Start Client:**
 
 ```bash
 ./start_client.sh localhost 9876 doctor_alice password
 ```
 
----
-
-## Examples
-
-Once connected, try these commands:
-
-### Valid Scenarios (Things that should work)
-
-**1. Doctor creates a record:**
-_(As `doctor_alice`)_
+**2. Test Commands (Type these in the client):**
 
 ```text
+# Create a new record for patient_charlie associated with nurse_bob
 WRITE rec1 patient_charlie;doctor_alice;nurse_bob;Cardiology;Blood Pressure 120/80
-```
 
-_Server Response: `OK Record written`_
-
-**2. Nurse reads the record (Same Division/Associated):**
-_(As `nurse_bob`)_
-
-```text
+# Read the record we just created
 READ rec1
+
+# Modify the record (Doctor is associated)
+WRITE rec1 patient_charlie;doctor_alice;nurse_bob;Cardiology;Blood Pressure 130/85
 ```
-
-_Server Response: `OK rec1;patient_charlie;doctor_alice;nurse_bob;Cardiology;Blood Pressure 120/80`_
-
-**3. Patient reads their own record:**
-_(As `patient_charlie`)_
-
-```text
-READ rec1
-```
-
-_Server Response: `OK ...`_
-
-**4. Government deletes a record:**
-_(As `gov_dave`)_
-
-```text
-DELETE rec1
-```
-
-_Server Response: `OK Record deleted`_
-
-### Invalid Scenarios (Things that should fail)
-
-**1. Nurse tries to delete a record:**
-_(As `nurse_bob`)_
-
-```text
-DELETE rec1
-```
-
-_Server Response: `DENIED User nurse_bob not allowed to delete records.`_
-
-**2. Patient tries to read someone else's record:**
-_(As `patient_charlie` trying to read a record where they are not the patient)_
-
-```text
-READ rec2
-```
-
-_Server Response: `DENIED Access denied for user: patient_charlie`_
-
-**3. Writing with invalid format:**
-
-```text
-WRITE rec1 bad_data
-```
-
-_Server Response: `ERROR Invalid data format. Expected: patientId;doctorId;nurseId;division;data`_
 
 ---
+
+### Nurse (Bob)
+
+**Role:** Nurse | **Division:** Cardiology
+
+**1. Start Client:**
+
+```bash
+./start_client.sh localhost 9876 nurse_bob password
+```
+
+**2. Test Commands:**
+
+```text
+# Read a record in same division (Cardiology) - Should SUCCESS
+READ rec1
+
+# Try to delete a record - Should FAIL (Access Denied)
+DELETE rec1
+
+# Write to a record (Nurse is associated) - Should SUCCESS
+WRITE rec1 patient_charlie;doctor_alice;nurse_bob;Cardiology;Patient resting comfortably
+```
+
+---
+
+### Patient (Charlie)
+
+**Role:** Patient
+
+**1. Start Client:**
+
+```bash
+./start_client.sh localhost 9876 patient_charlie password
+```
+
+**2. Test Commands:**
+
+```text
+# Read own record - Should SUCCESS
+READ rec1
+
+# Try to write/modify record - Should FAIL
+WRITE rec1 patient_charlie;doctor_alice;nurse_bob;Cardiology;Hacking into mainframe...
+```
+
+---
+
+### Government (Dave)
+
+**Role:** Government Agency
+
+**1. Start Client:**
+
+```bash
+./start_client.sh localhost 9876 gov_dave password
+```
+
+**2. Test Commands:**
+
+```text
+# Read any record - Should SUCCESS
+READ rec1
+
+# Delete the record - Should SUCCESS
+DELETE rec1
+
+# Verify deletion (Read again) - Should Fail (Not Found)
+READ rec1
+```

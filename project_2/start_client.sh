@@ -10,7 +10,7 @@ fi
 HOST=$1
 PORT=$2
 USER_PREFIX=$3
-KEY_PASS=$4
+KEY_PASS=$4 # IS "password" for every user!!!
 
 # Keystore path based on the user prefix convention used in setup_pki.sh
 KEYSTORE="keystores/${USER_PREFIX}_keystore.jks"

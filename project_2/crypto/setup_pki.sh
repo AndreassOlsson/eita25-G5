@@ -2,7 +2,10 @@
 # Project 2 PKI Setup Script
 # Run this in the 'crypto' directory to generate keys in '../keystores'
 
+# PASSWORD IS SET WHEN GENERATING THE KEYS!
 PASS="password"
+
+
 # Define the server's identity. 
 SERVER_CN="CN=HospitalServer, OU=IT, O=Hospital, C=SE"
 
