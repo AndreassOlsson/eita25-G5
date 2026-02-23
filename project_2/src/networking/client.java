@@ -60,11 +60,7 @@ public class client {
                  PrintWriter networkOut = new PrintWriter(socket.getOutputStream(), true);
                  BufferedReader userIn = new BufferedReader(new InputStreamReader(System.in))) {
 
-                System.out.println("\n--- Commands ---");
-                System.out.println("READ <recordId>");
-                System.out.println("WRITE <recordId> <patientId>;<doctorId>;<nurseId>;<division>;<data>");
-                System.out.println("DELETE <recordId>");
-                System.out.println("QUIT to exit");
+                System.out.println("Type 'HELP' for commands or 'QUIT' to exit.");
                 System.out.print("> ");
 
                 String userInput;
@@ -73,15 +69,26 @@ public class client {
                     
                     networkOut.println(userInput);
                     
-                    String response = networkIn.readLine();
-                    System.out.println("Server: " + response);
+                    // Read potentially multi-line response
+                    String line;
+                    while ((line = networkIn.readLine()) != null) {
+                        System.out.println("Server: " + line);
+                        if (!networkIn.ready()) break; // Simple check to stop if no more lines immediately available
+                    }
                     System.out.print("> ");
                 }
             }
 
         } catch (Exception e) {
-            System.err.println("Client Error: " + e.getMessage());
-            e.printStackTrace();
+            if (e instanceof java.io.IOException && e.getMessage().contains("password")) {
+                 System.err.println("\nAuthentication Error: Incorrect password for keystore or truststore.");
+                 System.err.println("Please try again with the correct password.");
+            } else if (e.getCause() instanceof java.security.UnrecoverableKeyException) {
+                 System.err.println("\nAuthentication Error: Unable to recover key (Wrong password?)");
+            } else {
+                 System.err.println("\nClient Error: " + e.getMessage());
+                 e.printStackTrace();
+            }
         }
     }
 

@@ -21,8 +21,6 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.TrustManagerFactory;
 
 import src.config.Settings;
-import src.models.MedicalRecord;
-import src.models.PermissionDeniedException;
 import src.models.Role;
 import src.models.User;
 import src.repositories.IAuditLogRepo;
@@ -125,10 +123,12 @@ public class server {
                 System.out.println("  Protocol: " + session.getProtocol());
                 System.out.println("  Cipher Suite: " + session.getCipherSuite());
 
+                RequestHandler handler = new RequestHandler(recordRepo, auditLogRepo);
+
                 String requestLine;
                 while ((requestLine = in.readLine()) != null) {
                     System.out.println("Request from " + user.getUsername() + ": " + requestLine);
-                    String response = handleRequest(user, requestLine);
+                    String response = handler.handle(user, requestLine);
                     out.println(response);
                 }
 
@@ -161,73 +161,6 @@ public class server {
             }
             
             return new User(username, role, division);
-        }
-
-        private String handleRequest(User user, String requestLine) {
-            String[] parts = requestLine.split(" ", 3);
-            if (parts.length == 0) return "ERROR Empty request";
-            String command = parts[0];
-
-            try {
-                if ("READ".equalsIgnoreCase(command) && parts.length >= 2) {
-                    String recordId = parts[1];
-                    try {
-                        MedicalRecord record = recordRepo.read(user, recordId);
-                        auditLogRepo.log(user, "READ", recordId, "Success");
-                        return "OK " + record.toString();
-                    } catch (PermissionDeniedException e) {
-                        auditLogRepo.log(user, "READ", recordId, "Denied: " + e.getMessage());
-                        throw e;
-                    }
-                } 
-                else if ("WRITE".equalsIgnoreCase(command) && parts.length >= 3) {
-                    String recordId = parts[1];
-                    String recordData = parts[2]; 
-                    String[] dataParts = recordData.split(";", 5);
-                    if (dataParts.length < 5) return "ERROR Invalid data format";
-
-                    MedicalRecord record = new MedicalRecord(
-                        recordId, 
-                        dataParts[0], 
-                        dataParts[1], 
-                        dataParts[2], 
-                        dataParts[3], 
-                        dataParts[4]
-                    );
-                    
-                    try {
-                        recordRepo.write(user, record);
-                        auditLogRepo.log(user, "WRITE", recordId, "Success");
-                        return "OK Record written";
-                    } catch (PermissionDeniedException e) {
-                        auditLogRepo.log(user, "WRITE", recordId, "Denied: " + e.getMessage());
-                        throw e;
-                    }
-                }
-                else if ("DELETE".equalsIgnoreCase(command) && parts.length >= 2) {
-                    String recordId = parts[1];
-                    try {
-                        recordRepo.delete(user, recordId);
-                        auditLogRepo.log(user, "DELETE", recordId, "Success");
-                        return "OK Record deleted";
-                    } catch (PermissionDeniedException e) {
-                        auditLogRepo.log(user, "DELETE", recordId, "Denied: " + e.getMessage());
-                        throw e;
-                    }
-                }
-                else {
-                    return "ERROR Unknown command";
-                }
-            } catch (PermissionDeniedException e) {
-                return "DENIED " + e.getMessage();
-            } catch (IOException e) {
-                try {
-                    auditLogRepo.log(user, command, parts.length > 1 ? parts[1] : "N/A", "Error: " + e.getMessage());
-                } catch (IOException logEx) {
-                    logEx.printStackTrace();
-                }
-                return "ERROR " + e.getMessage();
-            }
         }
     }
 }

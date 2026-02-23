@@ -1,4 +1,4 @@
-package src.models;
+package src.exceptions;
 
 public class PermissionDeniedException extends Exception {
     public PermissionDeniedException(String message) {

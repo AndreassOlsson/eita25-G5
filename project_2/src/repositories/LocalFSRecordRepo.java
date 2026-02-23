@@ -7,10 +7,12 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import src.access.AccessController;
+import src.exceptions.PermissionDeniedException;
 import src.models.MedicalRecord;
-import src.models.PermissionDeniedException;
 import src.models.User;
 
 public class LocalFSRecordRepo implements IRecordRepo {
@@ -86,6 +88,27 @@ public class LocalFSRecordRepo implements IRecordRepo {
         
         Path file = Paths.get(dbPath, recordId + ".txt");
         Files.deleteIfExists(file);
+    }
+
+    @Override
+    public List<String> listRecords(User user) throws IOException {
+        try (Stream<Path> stream = Files.list(Paths.get(dbPath))) {
+            return stream
+                .filter(file -> !Files.isDirectory(file))
+                .map(Path::getFileName)
+                .map(Path::toString)
+                .filter(name -> name.endsWith(".txt"))
+                .map(name -> name.substring(0, name.length() - 4)) // remove .txt
+                .filter(id -> {
+                    try {
+                        MedicalRecord r = readFromFile(id);
+                        return r != null && AccessController.canRead(user, r);
+                    } catch (IOException e) {
+                        return false;
+                    }
+                })
+                .collect(Collectors.toList());
+        }
     }
 
     private MedicalRecord readFromFile(String id) throws IOException {
