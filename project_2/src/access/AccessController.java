@@ -20,7 +20,6 @@ public class AccessController {
         return switch (u.getRole()) {
             case Role.NURSE -> u.getUsername().equals(r.getNurseId());
             case Role.DOCTOR -> u.getUsername().equals(r.getDoctorId());
-            case Role.GOVERNMENT -> true;
             default -> false;
         };
     }
