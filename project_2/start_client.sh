@@ -3,7 +3,7 @@
 
 if [ $# -lt 3 ]; then
     echo "Usage: ./start_client.sh <host> <port> <user_prefix> [keystore_pass]"
-    echo "Example: ./start_client.sh localhost 9876 doctor_alice <password>"
+    echo "Example: ./start_client.sh localhost 9876 doctor_alice password"
     exit 1
 fi
 
