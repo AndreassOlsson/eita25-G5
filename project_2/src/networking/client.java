@@ -26,6 +26,7 @@ import src.config.Settings;
 public class client {
     
     public static void main(String[] args) {
+        System.out.println("Java Version: " + System.getProperty("java.version"));
         if (args.length < 2) {
             System.out.println("USAGE: java ... src.networking.client <host> <port> [user_prefix]");
             System.exit(-1);
@@ -49,6 +50,14 @@ public class client {
         try {
             SSLSocketFactory factory = getSocketFactory(keystorePath, truststorePath, keystorePass, truststorePass);
             SSLSocket socket = (SSLSocket) factory.createSocket(host, port);
+
+            String[] supported = socket.getSupportedCipherSuites();
+            String[] enabled = socket.getEnabledCipherSuites();
+            System.out.println("Supported Cipher Suites: " + supported.length);
+            System.out.println("Enabled Cipher Suites: " + enabled.length);
+            for (int i = 0; i < Math.min(3, enabled.length); i++) {
+                System.out.println("Enabled Cipher Suite [" + i + "]: " + enabled[i]);
+            }
             
             socket.startHandshake();
             SSLSession session = socket.getSession();

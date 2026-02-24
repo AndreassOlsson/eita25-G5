@@ -34,6 +34,7 @@ public class server {
     private static IAuditLogRepo auditLogRepo;
 
     public static void main(String[] args) {
+        System.out.println("Java Version: " + System.getProperty("java.version"));
         if (args.length < 1) {
             System.err.println("Usage: java ... src.networking.server <port>");
             System.exit(1);
@@ -56,6 +57,14 @@ public class server {
             SSLServerSocketFactory ssf = getServerSocketFactory();
             SSLServerSocket ss = (SSLServerSocket) ssf.createServerSocket(port, 0, InetAddress.getByName(null));
             ss.setNeedClientAuth(true);
+            
+            String[] supported = ss.getSupportedCipherSuites();
+            String[] enabled = ss.getEnabledCipherSuites();
+            System.out.println("Supported Cipher Suites: " + supported.length);
+            System.out.println("Enabled Cipher Suites: " + enabled.length);
+            for (int i = 0; i < Math.min(3, enabled.length); i++) {
+                System.out.println("Enabled Cipher Suite [" + i + "]: " + enabled[i]);
+            }
 
             System.out.println("Server started on port " + port);
             System.out.println("Waiting for connections...");
