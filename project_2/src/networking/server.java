@@ -152,7 +152,7 @@ public class server {
             String subjectDN = cert.getSubjectX500Principal().getName();
             LdapName ldapDN = new LdapName(subjectDN);
             
-            String username = null;
+            String cn = null;
             Role role = null;
             String division = null;
 
@@ -161,7 +161,7 @@ public class server {
                 String value = rdn.getValue().toString();
                 
                 if (type.equalsIgnoreCase("CN")) {
-                    username = value;
+                    cn = value;
                 } else if (type.equalsIgnoreCase("OU")) {
                     division = value;
                 } else if (type.equalsIgnoreCase("O")) {
@@ -169,7 +169,7 @@ public class server {
                 }
             }
             
-            return new User(username, role, division);
+            return User.fromCertificate(cn, role, division);
         }
     }
 }
