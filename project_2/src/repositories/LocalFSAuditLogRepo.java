@@ -14,7 +14,11 @@ public class LocalFSAuditLogRepo implements IAuditLogRepo {
     private final String logPath;
 
     public LocalFSAuditLogRepo() {
-        this.logPath = "localDB/audit_log.txt";
+        this("localDB/audit_log.txt");
+    }
+
+    public LocalFSAuditLogRepo(String logPath) {
+        this.logPath = logPath;
         initDB();
     }
 
