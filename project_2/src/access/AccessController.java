@@ -8,9 +8,9 @@ public class AccessController {
     
     public static boolean canRead(User u, MedicalRecord r) {
         return switch (u.getRole()) {
-            case Role.PATIENT -> u.getUsername().equals(r.getPatientId());
-            case Role.NURSE, Role.DOCTOR -> u.getUsername().equals(r.getNurseId())
-                              || u.getUsername().equals(r.getDoctorId())
+            case Role.PATIENT -> u.matches(r.getPatientId());
+            case Role.NURSE, Role.DOCTOR -> u.matches(r.getNurseId())
+                              || u.matches(r.getDoctorId())
                               || (u.getDivision() != null && u.getDivision().equals(r.getDivision()));
             case Role.GOVERNMENT -> true;
         };
@@ -18,8 +18,8 @@ public class AccessController {
 
     public static boolean canWrite(User u, MedicalRecord r) {
         return switch (u.getRole()) {
-            case Role.NURSE -> u.getUsername().equals(r.getNurseId());
-            case Role.DOCTOR -> u.getUsername().equals(r.getDoctorId());
+            case Role.NURSE -> u.matches(r.getNurseId());
+            case Role.DOCTOR -> u.matches(r.getDoctorId());
             default -> false;
         };
     }
@@ -29,6 +29,6 @@ public class AccessController {
     }
 
     public static boolean canCreate(User u) {
-        return u.getRole() == Role.DOCTOR || u.getRole() == Role.GOVERNMENT;
+        return u.getRole() == Role.DOCTOR;
     }
 }

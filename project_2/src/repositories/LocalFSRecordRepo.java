@@ -30,14 +30,19 @@ public class LocalFSRecordRepo implements IRecordRepo {
 
     private void initDB() {
         try {
-            Files.createDirectories(Paths.get(dbPath));
+            ensureStorageDirectory();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    private void ensureStorageDirectory() throws IOException {
+        Files.createDirectories(Paths.get(dbPath));
+    }
+
     @Override
     public MedicalRecord read(User user, String recordId) throws PermissionDeniedException, IOException {
+        ensureStorageDirectory();
         MedicalRecord record = readFromFile(recordId);
         
         if (record == null) {
@@ -55,6 +60,7 @@ public class LocalFSRecordRepo implements IRecordRepo {
 
     @Override
     public void write(User user, MedicalRecord record) throws PermissionDeniedException, IOException {
+        ensureStorageDirectory();
         // If the record exists, check if user can write (modify) it.
         // If it's new, check if user can create.
         
@@ -77,6 +83,7 @@ public class LocalFSRecordRepo implements IRecordRepo {
 
     @Override
     public void delete(User user, String recordId) throws PermissionDeniedException, IOException {
+        ensureStorageDirectory();
         MedicalRecord record = readFromFile(recordId);
         if (record == null) {
              throw new IOException("Record not found: " + recordId);
@@ -92,6 +99,7 @@ public class LocalFSRecordRepo implements IRecordRepo {
 
     @Override
     public List<String> listRecords(User user) throws IOException {
+        ensureStorageDirectory();
         try (Stream<Path> stream = Files.list(Paths.get(dbPath))) {
             return stream
                 .filter(file -> !Files.isDirectory(file))
@@ -112,6 +120,7 @@ public class LocalFSRecordRepo implements IRecordRepo {
     }
 
     private MedicalRecord readFromFile(String id) throws IOException {
+        ensureStorageDirectory();
         Path file = Paths.get(dbPath, id + ".txt");
         if (!Files.exists(file)) return null;
         List<String> lines = Files.readAllLines(file);

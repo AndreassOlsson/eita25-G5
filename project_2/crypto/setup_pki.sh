@@ -60,9 +60,18 @@ create_entity "server" "server" "$SERVER_CN"
 
 echo "=== STEP 3: Creating User Keys for Small Example ==="
 # Notice the naming convention: CN = Name, OU = Division, O = Role 
+
+# Cardiology Division
 create_entity "doctor_alice" "client" "CN=Alice Alison, OU=Cardiology, O=Doctor, C=SE"
 create_entity "nurse_bob" "client" "CN=Bob Bobson, OU=Cardiology, O=Nurse, C=SE"
+create_entity "nurse_carol" "client" "CN=Carol Carlson, OU=Cardiology, O=Nurse, C=SE"
+
+# Oncology Division
+create_entity "doctor_mallory" "client" "CN=Mallory Mallet, OU=Oncology, O=Doctor, C=SE"
+
+# Patients & Gov
 create_entity "patient_charlie" "client" "CN=Charlie Charles, OU=None, O=Patient, C=SE"
+create_entity "patient_eve" "client" "CN=Eve Evans, OU=None, O=Patient, C=SE"
 create_entity "gov_dave" "client" "CN=Dave Davidson, OU=None, O=Government, C=SE"
 
 echo "=== Setup Complete! Keys are in $OUT_DIR ==="

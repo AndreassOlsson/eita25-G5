@@ -20,7 +20,10 @@ rm -rf keystores
 
 echo ""
 echo "Starting the server..."
-javac src/**/*.java
+if [ ! -d build/classes ] || [ -z "$(find build/classes -name '*.class' -print -quit)" ]; then
+  echo "Error: build/classes not found or empty. Run ./build.sh before starting the server."
+  exit 1
+fi
 # Pass system properties to the server
 # Note: Using server_keystore.jks and server_truststore.jks which are created by setup_pki.sh
 java \
@@ -28,4 +31,4 @@ java \
   -Djavax.net.ssl.keyStorePassword=password \
   -Djavax.net.ssl.trustStore=keystores/server_truststore.jks \
   -Djavax.net.ssl.trustStorePassword=password \
-  -cp . src.networking.server 9876
+  -cp "build/classes:libs/*" src.networking.server 9876

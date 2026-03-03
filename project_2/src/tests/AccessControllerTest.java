@@ -14,56 +14,88 @@ class AccessControllerTest {
 
     @Test
     void patientCanOnlyReadOwnRecord() {
-        User alice = new User("alice", Role.PATIENT, null);
-        MedicalRecord own = record("rec1", "alice", "doc1", "nurse1", "Cardiology");
-        MedicalRecord foreign = record("rec2", "bob", "doc2", "nurse2", "Cardiology");
+        User charlie = new User("Charlie Charles", Role.PATIENT, null);
+        MedicalRecord charlieVitals = record("rec_charlie_bp", "Charlie Charles", "Alice Alison", "Bob Bobson", "Cardiology", "Blood Pressure 120/80");
+        MedicalRecord charlieFollowUp = record("rec_charlie_followup", "Charlie Charles", "Alice Alison", "Carol Carlson", "Cardiology", "Follow-up consultation");
+        MedicalRecord eveOncology = record("rec_eve_oncology", "Eve Evans", "Mallory Mallet", "Carol Carlson", "Oncology", "Oncology intake");
 
-        assertTrue(AccessController.canRead(alice, own));
-        assertFalse(AccessController.canRead(alice, foreign));
-        assertFalse(AccessController.canWrite(alice, own));
-        assertFalse(AccessController.canCreate(alice));
-        assertFalse(AccessController.canDelete(alice));
+        assertTrue(AccessController.canRead(charlie, charlieVitals));
+        assertTrue(AccessController.canRead(charlie, charlieFollowUp));
+        assertFalse(AccessController.canRead(charlie, eveOncology));
+        assertFalse(AccessController.canWrite(charlie, charlieVitals));
+        assertFalse(AccessController.canCreate(charlie));
+        assertFalse(AccessController.canDelete(charlie));
     }
 
     @Test
     void nurseHasDivisionReadButOnlyAssignedWrite() {
-        User nina = new User("nina", Role.NURSE, "Cardiology");
-        MedicalRecord assigned = record("rec1", "p1", "doc1", "nina", "Cardiology");
-        MedicalRecord sameDivision = record("rec2", "p2", "doc2", "nurse2", "Cardiology");
-        MedicalRecord otherDivision = record("rec3", "p3", "doc3", "nurse3", "Radiology");
+        User bob = new User("Bob Bobson", Role.NURSE, "Cardiology");
+        MedicalRecord bobAssignment = record("rec_charlie_bp", "Charlie Charles", "Alice Alison", "Bob Bobson", "Cardiology", "Blood Pressure 120/80");
+        MedicalRecord carolAssignment = record("rec_charlie_followup", "Charlie Charles", "Alice Alison", "Carol Carlson", "Cardiology", "Follow-up consultation");
+        MedicalRecord oncologyRecord = record("rec_eve_oncology", "Eve Evans", "Mallory Mallet", "Carol Carlson", "Oncology", "Oncology intake");
 
-        assertTrue(AccessController.canRead(nina, assigned));
-        assertTrue(AccessController.canRead(nina, sameDivision));
-        assertFalse(AccessController.canRead(nina, otherDivision));
-        assertTrue(AccessController.canWrite(nina, assigned));
-        assertFalse(AccessController.canWrite(nina, sameDivision));
+        assertTrue(AccessController.canRead(bob, bobAssignment));
+        assertTrue(AccessController.canWrite(bob, bobAssignment));
+        assertTrue(AccessController.canRead(bob, carolAssignment));
+        assertFalse(AccessController.canWrite(bob, carolAssignment));
+        assertFalse(AccessController.canRead(bob, oncologyRecord));
     }
 
     @Test
     void doctorCreatesAndWritesAssignedRecordsOnly() {
-        User doc = new User("doc1", Role.DOCTOR, "Cardiology");
-        MedicalRecord assigned = record("rec1", "p1", "doc1", "nurse1", "Cardiology");
-        MedicalRecord otherDoctor = record("rec2", "p2", "doc2", "nurse2", "Cardiology");
+        User alice = new User("Alice Alison", Role.DOCTOR, "Cardiology");
+        User mallory = new User("Mallory Mallet", Role.DOCTOR, "Oncology");
+        MedicalRecord aliceAssignment = record("rec_charlie_bp", "Charlie Charles", "Alice Alison", "Bob Bobson", "Cardiology", "Blood Pressure 120/80");
+        MedicalRecord cardiologyTeamRecord = record("rec_charlie_followup", "Charlie Charles", "Mallory Mallet", "Carol Carlson", "Cardiology", "Shared cardiology consult");
+        MedicalRecord oncologyRecord = record("rec_eve_oncology", "Eve Evans", "Mallory Mallet", "Carol Carlson", "Oncology", "Oncology intake");
 
-        assertTrue(AccessController.canCreate(doc));
-        assertTrue(AccessController.canRead(doc, assigned));
-        assertTrue(AccessController.canRead(doc, otherDoctor));
-        assertTrue(AccessController.canWrite(doc, assigned));
-        assertFalse(AccessController.canWrite(doc, otherDoctor));
-        assertFalse(AccessController.canDelete(doc));
+        assertTrue(AccessController.canCreate(alice));
+        assertTrue(AccessController.canRead(alice, aliceAssignment));
+        assertTrue(AccessController.canWrite(alice, aliceAssignment));
+        assertTrue(AccessController.canRead(alice, cardiologyTeamRecord));
+        assertFalse(AccessController.canWrite(alice, cardiologyTeamRecord));
+        assertFalse(AccessController.canRead(alice, oncologyRecord));
+        assertFalse(AccessController.canWrite(alice, oncologyRecord));
+        assertFalse(AccessController.canDelete(alice));
+
+        assertTrue(AccessController.canRead(mallory, oncologyRecord));
+    }
+
+    @Test
+    void doctorRecordCreationRequiresAssignedPatientAndNurse() {
+        User alice = new User("Alice Alison", Role.DOCTOR, "Cardiology");
+        User bob = new User("Bob Bobson", Role.NURSE, "Cardiology");
+        MedicalRecord charlieWithBob = record("rec_charlie_bp", "Charlie Charles", "Alice Alison", "Bob Bobson", "Cardiology", "Blood Pressure 120/80");
+        MedicalRecord eveWithMallory = record("rec_eve_oncology", "Eve Evans", "Mallory Mallet", "Carol Carlson", "Oncology", "Oncology intake");
+        MedicalRecord missingNurse = new MedicalRecord("rec_pending", "Charlie Charles", "Alice Alison", "", "Cardiology", "Pending nurse assignment");
+
+        assertTrue(AccessController.canCreate(alice));
+        assertTrue(AccessController.canWrite(alice, charlieWithBob));
+        assertFalse(AccessController.canWrite(alice, eveWithMallory));
+        assertTrue(AccessController.canWrite(bob, charlieWithBob));
+        assertFalse(AccessController.canWrite(bob, missingNurse));
     }
 
     @Test
     void governmentReadsEverythingButCannotWrite() {
-        User gov = new User("gov", Role.GOVERNMENT, null);
-        MedicalRecord record = record("rec1", "p1", "doc1", "nurse1", "Cardiology");
+        User dave = new User("Dave Davidson", Role.GOVERNMENT, null);
+        MedicalRecord cardiologyRecord = record("rec_charlie_bp", "Charlie Charles", "Alice Alison", "Bob Bobson", "Cardiology", "Blood Pressure 120/80");
+        MedicalRecord oncologyRecord = record("rec_eve_oncology", "Eve Evans", "Mallory Mallet", "Carol Carlson", "Oncology", "Oncology intake");
 
-        assertTrue(AccessController.canRead(gov, record));
-        assertTrue(AccessController.canDelete(gov));
-        assertFalse(AccessController.canWrite(gov, record));
+        assertTrue(AccessController.canRead(dave, cardiologyRecord));
+        assertTrue(AccessController.canRead(dave, oncologyRecord));
+        assertTrue(AccessController.canDelete(dave));
+        assertFalse(AccessController.canWrite(dave, cardiologyRecord));
+        assertFalse(AccessController.canWrite(dave, oncologyRecord));
     }
 
-    private MedicalRecord record(String id, String patient, String doctor, String nurse, String division) {
-        return new MedicalRecord(id, patient, doctor, nurse, division, "sensitive");
+    @Test
+    void governmentCannotCreateRecords() {
+        User dave = new User("gov_dave", Role.GOVERNMENT, null);
+        assertFalse(AccessController.canCreate(dave));
+    }
+
+    private MedicalRecord record(String id, String patient, String doctor, String nurse, String division, String data) {
+        return new MedicalRecord(id, patient, doctor, nurse, division, data);
     }
 }

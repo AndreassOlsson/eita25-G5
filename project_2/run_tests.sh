@@ -3,22 +3,24 @@ set -euo pipefail
 
 JUNIT_VERSION="1.10.2"
 JUNIT_JAR="libs/junit-platform-console-standalone-${JUNIT_VERSION}.jar"
-BUILD_DIR="build/test-classes"
-SRC_LIST=".java-sources.txt"
+TEST_BUILD_DIR="build/test-classes"
+MAIN_BUILD_DIR="build/classes"
 
-echo "Ensuring JUnit console runner is available..."
 if [ ! -f "$JUNIT_JAR" ]; then
-	mkdir -p "$(dirname "$JUNIT_JAR")"
-	echo "Downloading JUnit Platform Console ${JUNIT_VERSION}..."
-	curl -sSL "https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/${JUNIT_VERSION}/junit-platform-console-standalone-${JUNIT_VERSION}.jar" -o "$JUNIT_JAR"
+	echo "Error: $JUNIT_JAR not found. Run ./build.sh to fetch dependencies and compile tests."
+	exit 1
 fi
 
-echo "Compiling sources..."
-rm -rf "$BUILD_DIR"
-mkdir -p "$BUILD_DIR"
-find src -name "*.java" > "$SRC_LIST"
-javac -d "$BUILD_DIR" -cp "$JUNIT_JAR" @"$SRC_LIST"
-rm "$SRC_LIST"
+if [ ! -d "$TEST_BUILD_DIR" ] || [ -z "$(find "$TEST_BUILD_DIR" -name '*.class' -print -quit)" ]; then
+	echo "Error: Compiled test classes missing. Run ./build.sh before executing tests."
+	exit 1
+fi
+
+if [ ! -d "$MAIN_BUILD_DIR" ] || [ -z "$(find "$MAIN_BUILD_DIR" -name '*.class' -print -quit)" ]; then
+	echo "Error: Compiled application classes missing. Run ./build.sh before executing tests."
+	exit 1
+fi
 
 echo "Running JUnit test suite..."
-java -jar "$JUNIT_JAR" --class-path "$BUILD_DIR" --scan-classpath
+CLASSPATH="$TEST_BUILD_DIR:$MAIN_BUILD_DIR"
+java -jar "$JUNIT_JAR" --class-path "$CLASSPATH" --scan-classpath

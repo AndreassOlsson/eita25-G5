@@ -22,6 +22,11 @@ if [ ! -f "$KEYSTORE" ]; then
     exit 1
 fi
 
+if [ ! -d build/classes ] || [ -z "$(find build/classes -name '*.class' -print -quit)" ]; then
+  echo "Error: build/classes not found or empty. Run ./build.sh before starting the client."
+  exit 1
+fi
+
 echo "Starting client for $USER_PREFIX..."
 
 # Run the client with system properties for configuring SSL
@@ -30,4 +35,4 @@ java \
   -Djavax.net.ssl.keyStorePassword="$KEY_PASS" \
   -Djavax.net.ssl.trustStore="$TRUSTSTORE" \
   -Djavax.net.ssl.trustStorePassword="$KEY_PASS" \
-  -cp . src.networking.client "$HOST" "$PORT" "$USER_PREFIX"
+    -cp "build/classes:libs/*" src.networking.client "$HOST" "$PORT" "$USER_PREFIX"
