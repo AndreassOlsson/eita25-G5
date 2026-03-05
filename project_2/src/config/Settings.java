@@ -1,6 +1,12 @@
 package src.config;
 
 public class Settings {
+    // SSL/TLS configuration
+    public static final String TLS_PROTOCOL = "TLSv1.2";
+    public static final String KEY_MANAGER_ALGORITHM = "SunX509";
+    public static final String TRUST_MANAGER_ALGORITHM = "SunX509";
+    public static final String KEYSTORE_TYPE = "JKS";
+
     // System props used to access the specific keystore and truststore for both client & server
     private static final String _KEYSTORE = "javax.net.ssl.keyStore";
     private static final String _KEYSTORE_PASS = "javax.net.ssl.keyStorePassword";

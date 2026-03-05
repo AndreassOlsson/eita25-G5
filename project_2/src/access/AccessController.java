@@ -7,18 +7,17 @@ import src.models.User;
 public class AccessController {
     public static boolean canRead(User user, MedicalRecord record) {
         return switch (user.getRole()) {
-            case Role.PATIENT -> user.matches(record.getPatientId());
-            case Role.NURSE, Role.DOCTOR -> user.matches(record.getNurseId())
-                              || user.matches(record.getDoctorId())
-                              || (user.getDivision() != null && user.getDivision().equals(record.getDivision()));
+            case Role.PATIENT -> record.hasPatient(user.getId());
+            case Role.NURSE, Role.DOCTOR -> record.isAssignedTo(user.getId())
+                              || record.isInDivision(user.getDivision());
             case Role.GOVERNMENT -> true;
         };
     }
 
     public static boolean canWrite(User user, MedicalRecord record) {
         return switch (user.getRole()) {
-            case Role.NURSE -> user.matches(record.getNurseId());
-            case Role.DOCTOR -> user.matches(record.getDoctorId());
+            case Role.NURSE -> record.hasNurse(user.getId());
+            case Role.DOCTOR -> record.hasDoctor(user.getId());
             default -> false;
         };
     }

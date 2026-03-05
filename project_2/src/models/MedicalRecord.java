@@ -37,6 +37,26 @@ public class MedicalRecord implements Serializable {
         return data;   
     }
 
+    public boolean hasPatient(String userId) {
+        return userId != null && userId.equals(patientId);
+    }
+
+    public boolean hasDoctor(String userId) {
+        return userId != null && userId.equals(doctorId);
+    }
+
+    public boolean hasNurse(String userId) {
+        return userId != null && userId.equals(nurseId);
+    }
+
+    public boolean isAssignedTo(String userId) {
+        return hasDoctor(userId) || hasNurse(userId);
+    }
+
+    public boolean isInDivision(String division) {
+        return division != null && division.equals(this.division);
+    }
+
     @Override
     public String toString() {
         return id + ";" + patientId + ";" + doctorId + ";" + nurseId + ";" + division + ";" + data;

@@ -2,28 +2,36 @@
 
 This test suite is designed to verify the implementation of the access control rules and the audit logging requirements as specified in the project description.
 
-## 1. Prerequisites & Setup
+## 1. Info & Setup
 
-Ensure all entities are created with the correct naming convention: `CN=Name, OU=Division, O=Role`.
+### Info: Which users are available
 
-**Entities:**
+**These are the available users (pasted from crypto/setup_pki.sh):**
 
-- **Cardiology Division:** Alice (Doctor), Bob (Nurse), Carol (Nurse)
-- **Oncology Division:** Mallory (Doctor)
-- **Patients:** Charlie, Eve
-- **Government Agency:** Dave
+```bash
+# Cardiology Division
+create_entity "doctor_alice" "client" "CN=Alice Alison, OU=Cardiology, O=Doctor, C=SE"
+create_entity "nurse_bob" "client" "CN=Bob Bobson, OU=Cardiology, O=Nurse, C=SE"
+create_entity "nurse_carol" "client" "CN=Carol Carlson, OU=Cardiology, O=Nurse, C=SE"
 
-**Start the server:**
+# Oncology Division
+create_entity "doctor_mallory" "client" "CN=Mallory Mallet, OU=Oncology, O=Doctor, C=SE"
+
+# Patients & Gov
+create_entity "patient_charlie" "client" "CN=Charlie Charles, OU=None, O=Patient, C=SE"
+create_entity "patient_eve" "client" "CN=Eve Evans, OU=None, O=Patient, C=SE"
+create_entity "gov_dave" "client" "CN=Dave Davidson, OU=None, O=Government, C=SE"
+```
+
+### Start the server
 
 ```bash
 ./start_server_and_pki.sh
 ```
 
-Then in a separate terminal, start a client session with the appropriate user.
-
----
-
 ## 2. Live Test Scenarios
+
+NOTE: Use a different terminal to connect to the server for each scenario.
 
 ### Scenario A: Doctor (Alice - Cardiology)
 

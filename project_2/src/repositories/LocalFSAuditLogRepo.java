@@ -5,10 +5,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.time.LocalDateTime;
 import java.util.Collections;
 
-import src.models.User;
+import src.models.AuditLogEntry;
 
 public class LocalFSAuditLogRepo implements IAuditLogRepo {
     private final String logPath;
@@ -42,11 +41,9 @@ public class LocalFSAuditLogRepo implements IAuditLogRepo {
     }
 
     @Override
-    public void log(User user, String action, String recordId, String details) throws IOException {
+    public void log(AuditLogEntry entry) throws IOException {
         ensureLogFileExists();
-        String entry = String.format("%s | User: %s | Action: %s | Record: %s | Details: %s",
-                LocalDateTime.now(), user.getUsername(), action, recordId, details);
-        
-        Files.write(Paths.get(logPath), Collections.singletonList(entry), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+        Files.write(Paths.get(logPath), Collections.singletonList(entry.toString()),
+                StandardOpenOption.CREATE, StandardOpenOption.APPEND);
     }
 }

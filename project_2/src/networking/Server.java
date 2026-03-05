@@ -34,8 +34,9 @@ public class Server {
     private static IAuditLogRepo auditLogRepo;
 
     public static void main(String[] args) {
+        System.out.println("=== SERVER STARTUP ===");
         System.out.println("Java Version: " + System.getProperty("java.version"));
-        
+
         if (args.length < 1) {
             System.err.println("Usage: java ... src.networking.server <port>");
             System.exit(1);
@@ -58,15 +59,21 @@ public class Server {
             SSLServerSocketFactory ssf = getServerSocketFactory();
             SSLServerSocket ss = (SSLServerSocket) ssf.createServerSocket(port, 0, InetAddress.getByName(null));
             ss.setNeedClientAuth(true);
+
+            System.out.println("\n=== TLS CONFIGURATION ===");
+            System.out.println("[TLS] Protocol: " + Settings.TLS_PROTOCOL);
+            System.out.println("[TLS] Mutual Authentication (Client Cert Required): " + ss.getNeedClientAuth());
+            System.out.println("[TLS] Keystore Type: " + Settings.KEYSTORE_TYPE);
+            System.out.println("[TLS] Key Manager Algorithm: " + Settings.KEY_MANAGER_ALGORITHM);
+            System.out.println("[TLS] Trust Manager Algorithm: " + Settings.TRUST_MANAGER_ALGORITHM);
             
-            String[] supported = ss.getSupportedCipherSuites();
             String[] enabled = ss.getEnabledCipherSuites();
-            System.out.println("Supported Cipher Suites: " + supported.length);
-            System.out.println("Enabled Cipher Suites: " + enabled.length);
-            for (int i = 0; i < Math.min(3, enabled.length); i++) {
-                System.out.println("Enabled Cipher Suite [" + i + "]: " + enabled[i]);
+            System.out.println("[TLS] Enabled Cipher Suites: " + enabled.length);
+            for (int i = 0; i < Math.min(5, enabled.length); i++) {
+                System.out.println("  [" + i + "] " + enabled[i]);
             }
 
+            System.out.println("\n=== SERVER READY ===");
             System.out.println("Server started on port " + port);
             System.out.println("Waiting for connections...");
 
@@ -84,10 +91,10 @@ public class Server {
     }
 
     private static SSLServerSocketFactory getServerSocketFactory() throws Exception {
-        SSLContext ctx = SSLContext.getInstance("TLSv1.2");
+        SSLContext ctx = SSLContext.getInstance(Settings.TLS_PROTOCOL);
         
-        KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-        KeyStore ks = KeyStore.getInstance("JKS");
+        KeyManagerFactory kmf = KeyManagerFactory.getInstance(Settings.KEY_MANAGER_ALGORITHM);
+        KeyStore ks = KeyStore.getInstance(Settings.KEYSTORE_TYPE);
         
         String keystorePath = Settings.getKeystorePath();
         char[] keystorePass = Settings.getKeystorePassword();
@@ -97,8 +104,8 @@ public class Server {
         }
         kmf.init(ks, keystorePass);
 
-        TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
-        KeyStore ts = KeyStore.getInstance("JKS");
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance(Settings.TRUST_MANAGER_ALGORITHM);
+        KeyStore ts = KeyStore.getInstance(Settings.KEYSTORE_TYPE);
         
         String truststorePath = Settings.getTruststorePath();
         char[] truststorePass = Settings.getTruststorePassword();
@@ -129,15 +136,19 @@ public class Server {
                 X509Certificate cert = (X509Certificate) session.getPeerCertificates()[0];
                 User user = extractUserFromCert(cert);
                 
-                System.out.println("Authenticated User: " + user);
-                System.out.println("  Protocol: " + session.getProtocol());
-                System.out.println("  Cipher Suite: " + session.getCipherSuite());
+                System.out.println("\n=== NEW CLIENT CONNECTION ===");
+                System.out.println("[AUTH] Client Certificate Subject: " + cert.getSubjectX500Principal().getName());
+                System.out.println("[AUTH] Client Certificate Issuer: " + cert.getIssuerX500Principal().getName());
+                System.out.println("[AUTH] Certificate Serial: " + cert.getSerialNumber());
+                System.out.println("[AUTH] Certificate Valid: " + cert.getNotBefore() + " to " + cert.getNotAfter());
+                System.out.println("[AUTH] Resolved Identity: " + user);
+                System.out.println("[TLS] Session Protocol: " + session.getProtocol());
+                System.out.println("[TLS] Session Cipher Suite: " + session.getCipherSuite());
 
                 RequestHandler handler = new RequestHandler(recordRepo, auditLogRepo);
 
                 String requestLine;
                 while ((requestLine = in.readLine()) != null) {
-                    System.out.println("Request from " + user.getUsername() + ": " + requestLine);
                     String response = handler.handle(user, requestLine);
                     out.println(response);
                 }
@@ -152,7 +163,7 @@ public class Server {
         private User extractUserFromCert(X509Certificate cert) throws InvalidNameException {
             String subjectDN = cert.getSubjectX500Principal().getName();
             LdapName ldapDN = new LdapName(subjectDN);
-            
+
             String cn = null;
             Role role = null;
             String division = null;
@@ -160,7 +171,7 @@ public class Server {
             for (Rdn rdn : ldapDN.getRdns()) {
                 String type = rdn.getType();
                 String value = rdn.getValue().toString();
-                
+
                 if (type.equalsIgnoreCase("CN")) {
                     cn = value;
                 } else if (type.equalsIgnoreCase("OU")) {
@@ -169,8 +180,9 @@ public class Server {
                     role = Role.fromString(value);
                 }
             }
-            
+
             return User.fromCertificate(cn, role, division);
         }
+
     }
 }
