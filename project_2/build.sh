@@ -21,14 +21,14 @@ mkdir -p "$MAIN_BUILD_DIR" "$TEST_BUILD_DIR"
 
 echo "Collecting source files..."
 if [ -d src ]; then
-	find src -path "src/tests" -prune -o -name "*.java" -print > "$MAIN_SOURCES_FILE"
+	find src -name "*.java" -print > "$MAIN_SOURCES_FILE"
 else
 	echo "Error: src directory not found"
 	exit 1
 fi
 
-if [ -d src/tests ]; then
-	find src/tests -name "*.java" > "$TEST_SOURCES_FILE"
+if [ -d tests ]; then
+	find tests -name "*.java" > "$TEST_SOURCES_FILE"
 else
 	: > "$TEST_SOURCES_FILE"
 fi

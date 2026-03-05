@@ -1,60 +1,48 @@
 package src.config;
 
 public class Settings {
-    // Standardized System Property Keys
-    public static final String PROP_KEYSTORE = "javax.net.ssl.keyStore";
-    public static final String PROP_KEYSTORE_PASS = "javax.net.ssl.keyStorePassword";
-    public static final String PROP_TRUSTSTORE = "javax.net.ssl.trustStore";
-    public static final String PROP_TRUSTSTORE_PASS = "javax.net.ssl.trustStorePassword";
+    // System props used to access the specific keystore and truststore for both client & server
+    private static final String _KEYSTORE = "javax.net.ssl.keyStore";
+    private static final String _KEYSTORE_PASS = "javax.net.ssl.keyStorePassword";
+    private static final String _TRUSTSTORE = "javax.net.ssl.trustStore";
+    private static final String _TRUSTSTORE_PASS = "javax.net.ssl.trustStorePassword";
     
-    // Application Specific Properties
-    public static final String PROP_CA_CERT = "project.pki.ca.cert";
+    /**
+     * Private helper method to fetch a required system property.
+     */
+    private static String getProp(String key) {
+        String value = System.getProperty(key);
+        if (value == null || value.trim().isEmpty()) {
+            throw new RuntimeException("Missing required system property: " + key);
+        }
+        return value;
+    }
 
     /**
      * Gets the configured Keystore path.
-     * Throws RuntimeException if not configured.
      */
     public static String getKeystorePath() {
-        String path = System.getProperty(PROP_KEYSTORE);
-        if (path == null || path.trim().isEmpty()) {
-            throw new RuntimeException("Missing required system property: " + PROP_KEYSTORE);
-        }
-        return path;
+        return getProp(_KEYSTORE);
     }
 
     /**
      * Gets the configured Keystore password.
-     * Throws RuntimeException if not configured.
      */
     public static char[] getKeystorePassword() {
-        String pass = System.getProperty(PROP_KEYSTORE_PASS);
-        if (pass == null || pass.trim().isEmpty()) {
-            throw new RuntimeException("Missing required system property: " + PROP_KEYSTORE_PASS);
-        }
-        return pass.toCharArray();
+        return getProp(_KEYSTORE_PASS).toCharArray();
     }
 
     /**
      * Gets the configured Truststore path.
-     * Throws RuntimeException if not configured.
      */
     public static String getTruststorePath() {
-        String path = System.getProperty(PROP_TRUSTSTORE);
-        if (path == null || path.trim().isEmpty()) {
-            throw new RuntimeException("Missing required system property: " + PROP_TRUSTSTORE);
-        }
-        return path;
+        return getProp(_TRUSTSTORE);
     }
 
     /**
      * Gets the configured Truststore password.
-     * Throws RuntimeException if not configured.
      */
     public static char[] getTruststorePassword() {
-        String pass = System.getProperty(PROP_TRUSTSTORE_PASS);
-        if (pass == null || pass.trim().isEmpty()) {
-            throw new RuntimeException("Missing required system property: " + PROP_TRUSTSTORE_PASS);
-        }
-        return pass.toCharArray();
+        return getProp(_TRUSTSTORE_PASS).toCharArray();
     }
 }

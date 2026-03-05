@@ -36,7 +36,7 @@ public class client {
         int port = Integer.parseInt(args[1]);
         String userPrefix = (args.length > 2) ? args[2] : "Unknown";
 
-        // Fetch settings from System Properties (Settings class enforces this)
+        // Fetch settings from System Properties 
         String keystorePath = Settings.getKeystorePath();
         String truststorePath = Settings.getTruststorePath();
         char[] keystorePass = Settings.getKeystorePassword();
@@ -66,8 +66,8 @@ public class client {
             System.out.println("  Cipher Suite: " + session.getCipherSuite());
 
             try (BufferedReader networkIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                 PrintWriter networkOut = new PrintWriter(socket.getOutputStream(), true);
-                 BufferedReader userIn = new BufferedReader(new InputStreamReader(System.in))) {
+                PrintWriter networkOut = new PrintWriter(socket.getOutputStream(), true);
+                BufferedReader userIn = new BufferedReader(new InputStreamReader(System.in))) {
 
                 System.out.println("Type 'HELP' for commands or 'QUIT' to exit.");
                 System.out.print("> ");
@@ -90,13 +90,13 @@ public class client {
 
         } catch (Exception e) {
             if (e instanceof java.io.IOException && e.getMessage().contains("password")) {
-                 System.err.println("\nAuthentication Error: Incorrect password for keystore or truststore.");
-                 System.err.println("Please try again with the correct password.");
+                System.err.println("\nAuthentication Error: Incorrect password for keystore or truststore.");
+                System.err.println("Please try again with the correct password.");
             } else if (e.getCause() instanceof java.security.UnrecoverableKeyException) {
-                 System.err.println("\nAuthentication Error: Unable to recover key (Wrong password?)");
+                System.err.println("\nAuthentication Error: Unable to recover key (Wrong password?)");
             } else {
-                 System.err.println("\nClient Error: " + e.getMessage());
-                 e.printStackTrace();
+                System.err.println("\nClient Error: " + e.getMessage());
+                e.printStackTrace();
             }
         }
     }
