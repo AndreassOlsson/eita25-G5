@@ -53,12 +53,20 @@ create_entity() {
 
     # Cleanup temporary files
     rm "$OUT_DIR/${PREFIX}.csr" "$OUT_DIR/${PREFIX}_cert.pem"
+
+    echo ""
 }
 
+echo ""
+echo ""
+echo ""
 echo "=== STEP 2: Creating Server Keys ==="
 create_entity "server" "server" "$SERVER_CN"
 
-echo "=== STEP 3: Creating User Keys for Small Example ==="
+echo ""
+echo ""
+echo ""
+echo "=== STEP 3: Creating User Keys ==="
 # Notice the naming convention: CN = Name, OU = Division, O = Role 
 
 # Cardiology Division
@@ -74,6 +82,9 @@ create_entity "patient_charlie" "client" "CN=Charlie Charles, OU=None, O=Patient
 create_entity "patient_eve" "client" "CN=Eve Evans, OU=None, O=Patient, C=SE"
 create_entity "gov_dave" "client" "CN=Dave Davidson, OU=None, O=Government, C=SE"
 
+echo ""
+echo ""
+echo ""
 echo "=== Setup Complete! Keys are in $OUT_DIR ==="
 # Cleanup CA keys (In a real system, these would be locked in a vault)
 # rm "$OUT_DIR/ca_private_key.pem" "$OUT_DIR/ca_cert.pem" "$OUT_DIR/ca_cert.srl" "$OUT_DIR/v3_extension.ext"
