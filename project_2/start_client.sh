@@ -35,4 +35,5 @@ java \
   -Djavax.net.ssl.keyStorePassword="$KEY_PASS" \
   -Djavax.net.ssl.trustStore="$TRUSTSTORE" \
   -Djavax.net.ssl.trustStorePassword="$KEY_PASS" \
-    -cp "build/classes:libs/*" src.networking.client "$HOST" "$PORT" "$USER_PREFIX"
+  -Djavax.net.debug=ssl,handshake \
+    -cp "build/classes:libs/*" src.networking.Client "$HOST" "$PORT" "$USER_PREFIX"

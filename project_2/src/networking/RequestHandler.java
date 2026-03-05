@@ -1,10 +1,13 @@
 package src.networking;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
+import src.access.AccessController;
 import src.exceptions.BadRequestException;
 import src.exceptions.PermissionDeniedException;
+import src.models.AuditLogEntry;
 import src.models.MedicalRecord;
 import src.models.User;
 import src.repositories.IAuditLogRepo;
@@ -58,7 +61,14 @@ public class RequestHandler {
         if (parts.length < 2) throw new BadRequestException("Missing record ID");
         String recordId = parts[1];
         
-        MedicalRecord record = recordRepo.read(user, recordId);
+        MedicalRecord record = recordRepo.read(recordId);
+
+        if (!AccessController.canRead(user, record)) {
+            logAccess(user, "DENIED", "Read", recordId);
+            throw new PermissionDeniedException("Access denied for user: " + user.getId());
+        }
+
+        logAccess(user, "GRANTED", "Read", recordId);
         log(user, "READ", recordId, "Success");
         return "OK " + record.toString();
     }
@@ -79,8 +89,29 @@ public class RequestHandler {
             dataParts[3], 
             dataParts[4]
         );
+
+        MedicalRecord existing = null;
+        try {
+            existing = recordRepo.read(recordId);
+        } catch (IOException e) {
+            // Record does not exist — this is a creation
+        }
+
+        if (existing == null) {
+            if (!AccessController.canCreate(user)) {
+                logAccess(user, "DENIED", "Create", recordId);
+                throw new PermissionDeniedException("User " + user.getId() + " not allowed to create records.");
+            }
+            logAccess(user, "GRANTED", "Create", recordId);
+        } else {
+            if (!AccessController.canWrite(user, existing)) {
+                logAccess(user, "DENIED", "Write", recordId);
+                throw new PermissionDeniedException("User " + user.getId() + " not allowed to modify this record.");
+            }
+            logAccess(user, "GRANTED", "Write", recordId);
+        }
         
-        recordRepo.write(user, record);
+        recordRepo.write(record);
         log(user, "WRITE", recordId, "Success");
         return "OK Record written";
     }
@@ -88,18 +119,37 @@ public class RequestHandler {
     private String handleDelete(User user, String[] parts) throws BadRequestException, PermissionDeniedException, IOException {
         if (parts.length < 2) throw new BadRequestException("Missing record ID");
         String recordId = parts[1];
+
+        // Verify record exists (read will throw if not found)
+        recordRepo.read(recordId);
+
+        if (!AccessController.canDelete(user)) {
+            logAccess(user, "DENIED", "Delete", recordId);
+            throw new PermissionDeniedException("User " + user.getId() + " not allowed to delete records.");
+        }
         
-        recordRepo.delete(user, recordId);
+        logAccess(user, "GRANTED", "Delete", recordId);
+        recordRepo.delete(recordId);
         log(user, "DELETE", recordId, "Success");
         return "OK Record deleted";
     }
 
     private String handleList(User user) throws IOException {
-        List<String> records = recordRepo.listRecords(user);
-        // Logging for LIST might be verbose if done per-request, but we can do it.
-        // Or skip logging for LIST to reduce noise? The requirements say "read/write/access". LIST is access.
-        log(user, "LIST", "ALL", "Success (" + records.size() + " records)");
-        return "OK " + String.join(",", records);
+        List<String> allIds = recordRepo.list();
+        List<String> accessible = new ArrayList<>();
+        for (String id : allIds) {
+            try {
+                MedicalRecord r = recordRepo.read(id);
+                if (AccessController.canRead(user, r)) {
+                    accessible.add(id);
+                }
+            } catch (IOException e) {
+                // Skip unreadable records
+            }
+        }
+        logAccess(user, "GRANTED", "List", accessible.size() + " records");
+        log(user, "LIST", "ALL", "Success (" + accessible.size() + " records)");
+        return "OK " + String.join(",", accessible);
     }
     
     private String handleHelp() {
@@ -111,9 +161,18 @@ public class RequestHandler {
                "  HELP";
     }
 
+    /**
+     * Prints a structured, non-sensitive access decision to stdout.
+     * Format: "<userId> <GRANTED|DENIED> <action> Record <recordId>"
+     */
+    private void logAccess(User user, String decision, String action, String recordId) {
+        System.out.println(user.getId() + " " + decision + " " + action + " Record " + recordId);
+    }
+
     private void log(User user, String action, String recordId, String details) {
         try {
-            auditLogRepo.log(user, action, recordId, details);
+            AuditLogEntry entry = new AuditLogEntry(user.getId(), action, recordId, details);
+            auditLogRepo.log(entry);
         } catch (IOException e) {
             System.err.println("Failed to write audit log: " + e.getMessage());
         }

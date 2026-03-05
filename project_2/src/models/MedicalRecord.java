@@ -3,7 +3,7 @@ package src.models;
 import java.io.Serializable;
 
 public class MedicalRecord implements Serializable {
-    private String id; // Added ID for lookup
+    private String id;
     private String patientId;
     private String doctorId;
     private String nurseId;
@@ -35,6 +35,26 @@ public class MedicalRecord implements Serializable {
     }
     public String getData() {
         return data;   
+    }
+
+    public boolean hasPatient(String userId) {
+        return userId != null && userId.equals(patientId);
+    }
+
+    public boolean hasDoctor(String userId) {
+        return userId != null && userId.equals(doctorId);
+    }
+
+    public boolean hasNurse(String userId) {
+        return userId != null && userId.equals(nurseId);
+    }
+
+    public boolean isAssignedTo(String userId) {
+        return hasDoctor(userId) || hasNurse(userId);
+    }
+
+    public boolean isInDivision(String division) {
+        return division != null && division.equals(this.division);
     }
 
     @Override

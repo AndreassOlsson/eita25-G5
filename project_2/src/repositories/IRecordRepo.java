@@ -3,13 +3,11 @@ package src.repositories;
 import java.io.IOException;
 import java.util.List;
 
-import src.exceptions.PermissionDeniedException;
 import src.models.MedicalRecord;
-import src.models.User;
 
 public interface IRecordRepo {
-    MedicalRecord read(User user, String recordId) throws PermissionDeniedException, IOException;
-    void write(User user, MedicalRecord record) throws PermissionDeniedException, IOException;
-    void delete(User user, String recordId) throws PermissionDeniedException, IOException;
-    List<String> listRecords(User user) throws IOException;
+    MedicalRecord read(String recordId) throws IOException;
+    void write(MedicalRecord record) throws IOException;
+    void delete(String recordId) throws IOException;
+    List<String> list() throws IOException;
 }

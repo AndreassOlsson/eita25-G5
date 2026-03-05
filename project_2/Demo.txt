@@ -1,0 +1,27 @@
+Terminal 1 - Setup (Doctor Alice creates a record):
+./start_client.sh localhost 9876 doctor_alice password
+WRITE rec_demo patient_charlie;doctor_alice;nurse_bob;Cardiology;BP 120/80
+READ rec_demo
+WRITE rec_demo patient_charlie;doctor_alice;nurse_bob;Cardiology;Updated BP 120/85
+READ rec_demo
+
+
+Terminal 2 - Patient Charlie (own record - ALLOWED):
+./start_client.sh localhost 9876 patient_charlie password
+READ rec_demo
+
+
+Terminal 3 - Doctor Mallory/Oncology (cross-division - DENIED):
+./start_client.sh localhost 9876 doctor_mallory password
+READ rec_demo
+
+
+Terminal 4 - Patient Eve (other patient's record - DENIED):
+./start_client.sh localhost 9876 patient_eve password
+READ rec_demo
+
+
+Terminal 5 - Government Dave (read & delete everything - ALLOWED):
+./start_client.sh localhost 9876 gov_dave password
+READ rec_demo
+DELETE rec_demo
