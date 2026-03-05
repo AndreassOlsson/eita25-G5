@@ -3,7 +3,7 @@ package src.models;
 import java.io.Serializable;
 
 public class MedicalRecord implements Serializable {
-    private String id; // Added ID for lookup
+    private String id;
     private String patientId;
     private String doctorId;
     private String nurseId;

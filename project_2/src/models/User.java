@@ -1,6 +1,7 @@
 package src.models;
 
 public class User {
+    private String id; // TODO: Should become what the "normalizedUsername" is currently attempting.
     private String username;
     private Role role;
     private String division;

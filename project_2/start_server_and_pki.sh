@@ -31,4 +31,5 @@ java \
   -Djavax.net.ssl.keyStorePassword=password \
   -Djavax.net.ssl.trustStore=keystores/server_truststore.jks \
   -Djavax.net.ssl.trustStorePassword=password \
-  -cp "build/classes:libs/*" src.networking.server 9876
+  -Djavax.net.debug=ssl,handshake \
+  -cp "build/classes:libs/*" src.networking.Server 9876

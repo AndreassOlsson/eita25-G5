@@ -28,13 +28,14 @@ import src.repositories.IRecordRepo;
 import src.repositories.LocalFSAuditLogRepo;
 import src.repositories.LocalFSRecordRepo;
 
-public class server {
+public class Server {
     
     private static IRecordRepo recordRepo;
     private static IAuditLogRepo auditLogRepo;
 
     public static void main(String[] args) {
         System.out.println("Java Version: " + System.getProperty("java.version"));
+        
         if (args.length < 1) {
             System.err.println("Usage: java ... src.networking.server <port>");
             System.exit(1);

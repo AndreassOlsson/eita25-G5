@@ -23,7 +23,7 @@ import src.config.Settings;
  *             -Djavax.net.ssl.trustStorePassword=password \
  *             src.networking.client <host> <port> <user_prefix>
  */
-public class client {
+public class Client {
     
     public static void main(String[] args) {
         System.out.println("Java Version: " + System.getProperty("java.version"));
